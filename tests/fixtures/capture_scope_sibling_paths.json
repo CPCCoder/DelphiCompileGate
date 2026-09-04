@@ -1,0 +1,6 @@
+{
+  "source_root": "tests/fixtures/capture_scope_project/ExampleProject",
+  "unit_tests_message": "tests/fixtures/capture_scope_project/ExampleProject/Tests/ExampleTests.pas",
+  "src_message": "tests/fixtures/capture_scope_project/ExampleProject/src/ScriptEngine.pas",
+  "unrelated_sibling_message": "tests/fixtures/capture_scope_project/unrelated/IDEMessage.pas"
+}

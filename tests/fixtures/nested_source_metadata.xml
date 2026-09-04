@@ -1,0 +1,9 @@
+<Project>
+  <ProjectExtensions>
+    <Source Name="NestedMetadata">
+      <Metadata>
+        <FileName>Original.dpr</FileName>
+      </Metadata>
+    </Source>
+  </ProjectExtensions>
+</Project>

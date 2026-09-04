@@ -1,0 +1,81 @@
+name: Bug report
+description: Report a reproducible DelphiCompileGate defect
+title: "[Bug] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report security vulnerabilities here. Follow SECURITY.md instead.
+
+  - type: input
+    id: version
+    attributes:
+      label: DelphiCompileGate version
+      description: Include the plugin version and package build ID when available.
+      placeholder: "2.0.0 / dcg-v2-..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: python
+    attributes:
+      label: Python version
+      options:
+        - "3.9"
+        - "3.10"
+        - "3.11"
+        - "Other or not applicable"
+    validations:
+      required: true
+
+  - type: input
+    id: delphi
+    attributes:
+      label: Delphi edition and compiler version
+      placeholder: "Delphi 13 Community Edition / CompilerVersion 37.0"
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Explain what happened and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Provide the smallest repeatable sequence, with sensitive data removed.
+      placeholder: |
+        1. Configure ...
+        2. Run ...
+        3. Observe ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized logs or evidence
+      description: Remove credentials, private source, personal data, and machine-specific secrets.
+      render: text
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Include target platform/configuration and relevant settings.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched existing issues for this defect.
+          required: true
+        - label: This report contains no private source code, credentials, or security-sensitive details.
+          required: true

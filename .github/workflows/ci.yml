@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check -e ".[dev]"
+
+      - name: Compile Python sources
+        run: python -c "import pathlib, py_compile; paths = [pathlib.Path('delphi_compile_gate.py'), *pathlib.Path('tests').glob('test_*.py')]; [py_compile.compile(str(path), doraise=True) for path in paths]"
+
+      - name: Run tests
+        run: python -m pytest
+
+      - name: Check whitespace errors
+        run: git diff --check
+
+      - name: Check for tracked-file changes
+        run: git diff --exit-code
+
+  release-hygiene:
+    name: Release hygiene
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Validate release metadata
+        shell: python
+        run: |
+          from pathlib import Path
+          import tomllib
+
+          root = Path.cwd()
+          required = [
+              "README.md",
+              "INSTALLATION.md",
+              "AGENTS.md",
+              "SECURITY.md",
+              "CONTRIBUTING.md",
+              "CHANGELOG.md",
+              "RELEASE_CHECKLIST.md",
+              ".github/ISSUE_TEMPLATE/bug_report.yml",
+              ".github/ISSUE_TEMPLATE/feature_request.yml",
+              ".github/pull_request_template.md",
+          ]
+          missing = [path for path in required if not (root / path).is_file()]
+          if missing:
+              raise SystemExit(f"Missing release files: {', '.join(missing)}")
+
+          metadata = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
+          project = metadata["project"]
+          if project.get("dependencies") != []:
+              raise SystemExit("Runtime dependencies must remain empty")
+          if project.get("license") != "MIT":
+              raise SystemExit("pyproject.toml must declare the MIT license")
+          if project.get("license-files") != ["LICENSE"]:
+              raise SystemExit("pyproject.toml must package LICENSE")
+          if not (root / "LICENSE").is_file():
+              raise SystemExit("MIT LICENSE file is missing")
+
+          version = project["version"]
+          build_info = (root / "Src/DelphiCompileGate.BuildInfo.pas").read_text(encoding="utf-8")
+          if f"DCG_PLUGIN_VERSION = '{version}'" not in build_info:
+              raise SystemExit("Python and plugin versions are not synchronized")
+          changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
+          if f"## [{version}]" not in changelog:
+              raise SystemExit(f"CHANGELOG.md has no entry for {version}")
+
+      - name: Build distributions
+        run: |
+          python -m pip install --disable-pip-version-check build
+          python -m build
+
+      - name: Verify wheel and test source distribution
+        run: python .github/scripts/verify_distributions.py
+
+      - name: Check release diff
+        run: |
+          git diff --check
+          git diff --exit-code

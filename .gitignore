@@ -1,0 +1,86 @@
+# DelphiCompileGate runtime queues and generated projects
+/Run/
+/Temp/
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Delphi compiler outputs
+*.dcu
+*.dcuil
+*.dcp
+*.bpl
+*.drc
+*.map
+*.rsm
+*.tds
+*.dres
+*.res
+*.exe
+*.dll
+*.so
+*.a
+*.o
+*.obj
+*.lib
+*.exp
+*.ilc
+*.ild
+*.ilf
+*.ils
+*.tmp
+
+# Delphi IDE local/generated files
+*.local
+*.identcache
+*.stat
+*.tvsconfig
+*.dsk
+*.dof
+*.cfg
+*.deployproj
+*.otares
+*.skincfg
+*.groupproj.local
+*.dproj.local
+
+# Delphi IDE history/recovery folders
+__history/
+__recovery/
+*.~*
+
+# Build output directories
+Win32/
+Win64/
+Win64x/
+Android/
+Android64/
+iOSDevice64/
+iOSSimulator64/
+OSX64/
+Debug/
+Release/
+__output/
+build/
+dist/
+out/
+bin/
+obj/
+
+# Logs and transient files
+*.log
+*.bak
+*.swp
+*.swo
+Thumbs.db
+desktop.ini
+
+# Editor folders
+.idea/
+.vscode/

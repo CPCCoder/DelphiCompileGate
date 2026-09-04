@@ -1,0 +1,14 @@
+{
+  "original_dpr": "tests/fixtures/capture_scope_project/ExampleProject/Tests/ExampleTests.dpr",
+  "wrapper_references": [
+    "tests/fixtures/capture_scope_project/ExampleProject/src/Parser/ParseSession.pas",
+    "tests/fixtures/capture_scope_project/ExampleProject/src/Parser/Parser.pas",
+    "tests/fixtures/capture_scope_project/ExampleProject/src/Parser/ParseSession.pas",
+    "tests/fixtures/capture_scope_project/ExampleProject/src/Parser/ModuleLoader.pas"
+  ],
+  "known_bare_diagnostic": "ParseSession.pas",
+  "unrelated_bare_diagnostic": "IDEMessage.pas",
+  "unrelated_bare_source": "tests/fixtures/capture_scope_project/unrelated/IDEMessage.pas",
+  "known_full_diagnostic": "tests/fixtures/capture_scope_project/ExampleProject/src/Parser/ModuleLoader.pas",
+  "unrelated_full_diagnostic": "tests/fixtures/capture_scope_project/unrelated/src/Parser/ModuleLoader.pas"
+}

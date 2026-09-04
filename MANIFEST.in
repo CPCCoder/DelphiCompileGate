@@ -1,0 +1,28 @@
+include pyproject.toml
+include LICENSE
+include delphi_compile_gate.py
+include README.md
+include INSTALLATION.md
+include AGENTS.md
+include ASSISTANT_GUIDE.md
+include KNOWN_ISSUES.md
+include CHANGELOG.md
+include CONTRIBUTING.md
+include RELEASE_CHECKLIST.md
+include SECURITY.md
+
+recursive-include Src *.pas *.inc *.dfm
+recursive-include Package *.dpk *.dproj *.groupproj
+recursive-include examples *.pas *.dpr *.dpk *.dproj *.groupproj *.inc *.dfm
+recursive-include tests *.py
+graft tests/fixtures
+
+global-exclude *.py[cod] *$py.class
+global-exclude *.dcu *.dcuil *.dcp *.bpl *.drc *.map *.rsm *.tds *.dres *.res
+global-exclude *.exe *.dll *.so *.a *.o *.obj *.lib *.exp
+global-exclude *.ilc *.ild *.ilf *.ils *.tmp
+global-exclude *.local *.identcache *.stat *.tvsconfig *.dsk *.dof *.cfg
+global-exclude *.deployproj *.otares *.skincfg *.groupproj.local *.dproj.local
+global-exclude *.log *.bak *.swp *.swo *.~* Thumbs.db desktop.ini
+global-exclude .env .env.* *.pem *.key *.pfx *.p12 *.crt *.cer
+global-exclude *secret* *secrets* *credential* *credentials*

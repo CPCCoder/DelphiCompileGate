@@ -1,0 +1,46 @@
+package DelphiCompileGate;
+
+{$R *.res}
+{$IFDEF IMPLICITBUILDING This IFDEF should not be used by users}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO OFF}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST OFF}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$ENDIF IMPLICITBUILDING}
+{$IMPLICITBUILD ON}
+
+requires
+  rtl,
+  vcl,
+  designide;
+
+contains
+  DelphiCompileGate.BuildInfo in '..\Src\DelphiCompileGate.BuildInfo.pas',
+  DelphiCompileGate.Compiler in '..\Src\DelphiCompileGate.Compiler.pas',
+  DelphiCompileGate.Consts in '..\Src\DelphiCompileGate.Consts.pas',
+  DelphiCompileGate.MessageHook in '..\Src\DelphiCompileGate.MessageHook.pas',
+  DelphiCompileGate.Register in '..\Src\DelphiCompileGate.Register.pas',
+  DelphiCompileGate.ProtocolV2 in '..\Src\DelphiCompileGate.ProtocolV2.pas',
+  DelphiCompileGate.Settings in '..\Src\DelphiCompileGate.Settings.pas',
+  DelphiCompileGate.SettingsDialog in '..\Src\DelphiCompileGate.SettingsDialog.pas',
+  DelphiCompileGate.Watch in '..\Src\DelphiCompileGate.Watch.pas',
+  DelphiCompileGate.Wizard in '..\Src\DelphiCompileGate.Wizard.pas';
+
+end.

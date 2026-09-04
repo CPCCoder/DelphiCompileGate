@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Compile Include="wrapper_capture_project\source\ModuleLoader.pas" />
+    <Compile Include="wrapper_capture_project\source\ModuleLoader.pas;wrapper_capture_project\source\OtherUnit.pas" />
+    <Compile Include="wrapper_capture_project\source\*.pas" />
+    <None Include="wrapper_capture_project\linked\ExplicitUnit.pp">
+      <Link>ExplicitUnit.pp</Link>
+    </None>
+  </ItemGroup>
+</Project>

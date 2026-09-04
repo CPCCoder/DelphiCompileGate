@@ -1,0 +1,4 @@
+program ExampleTests;
+
+begin
+end.
