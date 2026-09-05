@@ -2,25 +2,18 @@
 
 DelphiCompileGate is an Open Tools API (OTA) plugin for Delphi 13 Community
 Edition. It compiles Delphi projects with the compiler hosted inside the IDE.
-The current and only supported contract is Protocol 2.
+Builds are submitted through a Python API and return validated compiler,
+target, dialog, and artifact evidence.
 
-## Supported Contract
+## Supported Usage
 
 - `DelphiCompileGateClient.compile_project()` is the only supported compile API
   and the only supported producer of queue jobs.
-- The Python client atomically publishes only
-  `Input\<job_id>.job.json` manifests with `protocol: 2`, `schema_version: 2`,
-  and `kind: project_wrapper_build`.
-- The watcher processes only `*.job.json`. Other files in `Input` are not jobs.
 - Callers provide an absolute `.dpr` or `.dpk` file and may provide the
   same-directory, same-stem `.dproj` file.
 - Requests and results are validated against exact schemas, hashes, paths,
   identities, and target evidence. Missing or contradictory evidence fails
   closed.
-
-Legacy client methods, source-file queue payloads, multi-unit queue formats,
-and earlier result envelopes are not supported. Do not use historical behavior
-as current operational guidance.
 
 ## Repository Layout
 
