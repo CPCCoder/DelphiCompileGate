@@ -25,7 +25,7 @@ call any other client method as a compile entry point.
 - Delphi 13 Community Edition is running.
 - `Package\DelphiCompileGate.dpk` has been built and installed in Delphi 13.
 - `Delphi Compile Gate Settings / Status...` reports Protocol `2`, plugin
-  version `2.0.0`, and build ID `dcg-v2-20260904-releaseprep-02`.
+  version `2.0.0`, and build ID `dcg-v2-20260905-searchpathfix-03`.
 - The user selected **Start Watch** and then **OK** in Settings/Status. The
   watcher starts only after those actions; it does not start with the IDE.
 
@@ -117,6 +117,16 @@ events, or custom MSBuild imports. Pass the original `.dproj` when those are
 required. A supplied `.dproj` is trusted input: imports, targets, and custom
 build steps can execute commands under the Delphi process account. The Gate is
 not a build sandbox.
+
+A supplied `project_path` also carries its project-specific unit search path.
+Resolve every relative `DCC_UnitSearchPath` segment against the original DPROJ
+directory, preserve the inherited macro tail, and reject missing or reparse
+directories. Verify the official `DCCStrs.sUnitSearchPath` value on the selected
+active configuration before compile. If it is materialized while the derived
+OTA `UnitSearchPath` is empty, compile the unique wrapper through
+`IOTAProjectBuilder.BuildProject`; never guess or write an option key. Generated
+wrapper property groups must precede the `CodeGear.Delphi.Targets` import.
+Transitive units do not belong in the consumer DPR.
 
 The local Windows account and runtime queue are the trust boundary. The Gate
 accepts qualifying files from any workspace that account can read, and any

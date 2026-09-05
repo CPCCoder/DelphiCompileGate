@@ -805,6 +805,10 @@ begin
           FailureCode := 'wrapper_project_invalid'
         else if E.Message = 'source_only_main_kind_unsupported' then
           FailureCode := 'source_only_main_kind_unsupported'
+        else if E.Message = 'unit_search_path_unavailable' then
+          FailureCode := 'unit_search_path_unavailable'
+        else if E.Message = 'unit_search_path_invalid' then
+          FailureCode := 'unit_search_path_invalid'
         else if (E.Message = 'project_builder_unavailable') or
             (E.Message = 'compile_notifier_unavailable') or
             (E.Message = 'target_selection_unavailable') then

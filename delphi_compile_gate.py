@@ -44,10 +44,10 @@ class DelphiCompileGateClient:
     # Result shape is exact. Only packages that emit the current legal_notice
     # evidence object are accepted.
     V2_ALLOWED_PACKAGE_BUILD_IDS = frozenset({
-        "dcg-v2-20260904-releaseprep-02",
+        "dcg-v2-20260905-searchpathfix-03",
     })
     V2_PACKAGE_IDE_IDENTITIES = {
-        "dcg-v2-20260904-releaseprep-02": ("Delphi 13 Community Edition", 37.0),
+        "dcg-v2-20260905-searchpathfix-03": ("Delphi 13 Community Edition", 37.0),
     }
 
     def __init__(self, timeout: int = 60, base_dir: str = ""):

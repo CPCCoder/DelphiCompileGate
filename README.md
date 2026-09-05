@@ -11,6 +11,11 @@ target, dialog, and artifact evidence.
   and the only supported producer of queue jobs.
 - Callers provide an absolute `.dpr` or `.dpk` file and may provide the
   same-directory, same-stem `.dproj` file.
+- A supplied `.dproj` carries project-specific unit search paths. Relative
+  `DCC_UnitSearchPath` entries are resolved against the original project
+  directory, validated, and preserved with the inherited
+  `$(DCC_UnitSearchPath)` tail. Transitive units do not need to be repeated in
+  the consumer DPR.
 - Requests and results are validated against exact schemas, hashes, paths,
   identities, and target evidence. Missing or contradictory evidence fails
   closed.
@@ -58,7 +63,7 @@ troubleshooting instructions, see [`INSTALLATION.md`](INSTALLATION.md).
 After changing any Pascal source, rebuild and reinstall the package in the IDE.
 Changing the checkout does not update the loaded BPL. The loaded instance must
 report plugin version `2.0.0`, Protocol `2`, and build ID
-`dcg-v2-20260904-releaseprep-02`.
+`dcg-v2-20260905-searchpathfix-03`.
 
 ## Prompt for AI Coding Assistants
 
@@ -421,7 +426,7 @@ project-specific defines, packages, imports, search paths, or build steps.
   downstream-project paths are required.
 - A release must pass the Python contract tests and a Delphi 13 package build.
 - Published artifacts must identify plugin version `2.0.0`, Protocol `2`, and
-  build ID `dcg-v2-20260904-releaseprep-02`.
+  build ID `dcg-v2-20260905-searchpathfix-03`.
 - Security and dialog-policy limitations in `KNOWN_ISSUES.md` must be reviewed
   before publishing.
 - The project is distributed under the MIT License.

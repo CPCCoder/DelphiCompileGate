@@ -12,6 +12,8 @@ NESTED_SOURCE_FIXTURE = ROOT / "tests" / "fixtures" / "nested_source_metadata.xm
 CAPTURE_SCOPE_FIXTURE = ROOT / "tests" / "fixtures" / "capture_scope_sibling_paths.json"
 BARE_CAPTURE_SCOPE_FIXTURE = ROOT / "tests" / "fixtures" / "capture_scope_bare_filenames.json"
 COMPILE_ITEMS_FIXTURE = ROOT / "tests" / "fixtures" / "wrapper_capture_compile_items.dproj"
+SEARCH_PATH_DOM_FIXTURE = ROOT / "tests" / "fixtures" / "SearchPathDom" / "SearchPathDom.dproj"
+SEARCH_PATH_MACRO_FIXTURE = ROOT / "tests" / "fixtures" / "SearchPathDom" / "MacroRejected.dproj"
 
 
 def pascal_routine(source, name, next_name):
@@ -22,6 +24,129 @@ def pascal_routine(source, name, next_name):
 
 
 class WrapperIsolationContractTests(unittest.TestCase):
+
+    def test_search_path_facade_fixture_requires_transitive_project_path(self):
+        fixture = ROOT / "tests" / "fixtures" / "SearchPathFacade"
+        dpr = (fixture / "SearchPathFacade.dpr").read_text(encoding="utf-8")
+        dproj = (fixture / "SearchPathFacade.dproj").read_text(encoding="utf-8")
+        facade = (fixture / "src" / "Facade.pas").read_text(encoding="utf-8")
+        self.assertIn("Facade in 'src\\Facade.pas'", dpr)
+        self.assertNotIn("Dependency", dpr)
+        self.assertIn("Dependency", facade)
+        self.assertIn("<DCC_UnitSearchPath>lib;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>",
+                      dproj)
+        self.assertNotIn("lib\\Dependency.pas", dproj)
+        self.assertTrue((fixture / "lib" / "Dependency.pas").is_file())
+
+    def test_unit_search_path_diagnostics_use_official_ota_key_read_only(self):
+        validate = pascal_routine(
+            COMPILER,
+            "function TDelphiCompileGateCompiler.ValidateDprProject(",
+            "function TDelphiCompileGateCompiler.ValidateProjectWrapperV2(",
+        )
+        start = validate.index("function TraceUnitSearchPathState")
+        diagnostics = validate[start:validate.index("end;\nbegin", start)]
+        self.assertIn("DCCStrs.sUnitSearchPath", diagnostics)
+        self.assertIn("Options.Values['UnitSearchPath']", diagnostics)
+        self.assertIn("IOTAProjectOptionsConfigurations", diagnostics)
+        self.assertIn("PlatformConfiguration[APlatform]", diagnostics)
+        self.assertIn("GetValue(DCCStrs.sUnitSearchPath, False)", diagnostics)
+        self.assertIn("GetValue(DCCStrs.sUnitSearchPath, True)", diagnostics)
+        self.assertIn("InheritedValue(DCCStrs.sUnitSearchPath)", diagnostics)
+        self.assertIn("Merged[DCCStrs.sUnitSearchPath]", diagnostics)
+        self.assertIn("function WrapperDeclaresUnitSearchPath", diagnostics)
+        self.assertIn("Doc.LoadFromFile(ADprFile)", diagnostics)
+        self.assertIn("SameText(ANode.LocalName, 'DCC_UnitSearchPath')", diagnostics)
+        self.assertNotIn("SetValue", diagnostics)
+        self.assertNotIn("SetValues", diagnostics)
+        self.assertLess(validate.index("UseProjectBuilderForCompile := TraceUnitSearchPathState;"),
+                        validate.index("CompileServices.CompileProjects"))
+        self.assertIn("SuppliedProject := SameText(ExtractFileExt(ASourceName), '.dproj')",
+                      diagnostics)
+        self.assertIn("unit_search_path_unavailable", diagnostics)
+        self.assertIn("ProjectBuilder.BuildProject(cmOTABuild, False, True)",
+                      validate)
+        self.assertIn("Compile entry=IOTAProjectBuilder.BuildProject", validate)
+        self.assertNotIn("Options.Values[DCCStrs.sUnitSearchPath] :=", validate)
+
+    def test_derived_unit_search_path_read_failure_is_fail_closed(self):
+        validate = pascal_routine(
+            COMPILER,
+            "function TDelphiCompileGateCompiler.ValidateDprProject(",
+            "function TDelphiCompileGateCompiler.ValidateProjectWrapperV2(",
+        )
+        start = validate.index("function TraceUnitSearchPathState")
+        diagnostics = validate[start:validate.index("end;\nbegin", start)]
+        self.assertIn("EffectiveOptionAvailable := False", diagnostics)
+        self.assertIn("EffectiveOptionAvailable := True", diagnostics)
+        self.assertIn("(not EffectiveOptionAvailable)", diagnostics)
+        self.assertLess(
+            diagnostics.index("EffectiveOptionValue := '<error:' + E.ClassName + '>'"),
+            diagnostics.index("(not EffectiveOptionAvailable)"),
+        )
+        self.assertLess(
+            diagnostics.index("(not EffectiveOptionAvailable)"),
+            diagnostics.index("Result := DeclaresUnitSearchPath"),
+        )
+
+    def test_search_path_dom_fixture_covers_conditional_ampersand_and_import_order(self):
+        root = ET.parse(SEARCH_PATH_DOM_FIXTURE).getroot()
+        local_name = lambda node: node.tag.rsplit("}", 1)[-1]
+        search_paths = [node for node in root.iter()
+                        if local_name(node) == "DCC_UnitSearchPath"]
+        self.assertEqual(1, len(search_paths))
+        self.assertEqual("lib&shared;$(DCC_UnitSearchPath)", search_paths[0].text)
+        self.assertEqual("'$(Platform)'=='Win32'", search_paths[0].attrib["Condition"])
+        references = [node for node in root.iter() if local_name(node) == "DCCReference"]
+        self.assertEqual("lib&shared\\AmpDependency.pas", references[0].attrib["Include"])
+        imports = [node.attrib["Project"] for node in root
+                   if local_name(node) == "Import"]
+        self.assertEqual(["common.props", "$(BDS)\\Bin\\CodeGear.Delphi.Targets"], imports)
+        self.assertFalse(any(local_name(node) == "DCC_ExeOutput" for node in root.iter()))
+        self.assertTrue((SEARCH_PATH_DOM_FIXTURE.parent / "lib&shared" /
+                         "AmpDependency.pas").is_file())
+
+    def test_search_path_macro_fixture_requires_fail_closed_rejection(self):
+        root = ET.parse(SEARCH_PATH_MACRO_FIXTURE).getroot()
+        search_path = next(node for node in root.iter()
+                           if node.tag.rsplit("}", 1)[-1] == "DCC_UnitSearchPath")
+        self.assertEqual("lib\\$(Platform);$(DCC_UnitSearchPath)", search_path.text)
+
+    def test_unit_search_path_dom_rewrite_is_canonical_and_fail_closed(self):
+        rewriter = pascal_routine(
+            COMPILER,
+            "function TDelphiCompileGateCompiler.MakeDprojReferencesAbsolute(",
+            "function TDelphiCompileGateCompiler.SanitizeWrapperDprojSources(",
+        )
+        self.assertIn("function RewritePathList", rewriter)
+        self.assertIn("TXMLDocument.Create", rewriter)
+        self.assertIn("Doc.LoadFromXML(ADprojText)", rewriter)
+        self.assertIn("Result := Doc.XML.Text", rewriter)
+        self.assertIn("SameText(ANode.LocalName, AName)", rewriter)
+        self.assertIn("ANode.Text := RewritePathList(ANode.Text)", rewriter)
+        self.assertIn("ANode.Attributes['Include'] := AbsolutePath(IncludeValue)", rewriter)
+        self.assertNotIn("DecodeXMLText", rewriter)
+        self.assertNotIn("EncodeXMLText", rewriter)
+        self.assertIn("TPath.IsPathRooted(APath)", rewriter)
+        self.assertIn("TPath.Combine(ASourceDir, APath)", rewriter)
+        self.assertIn("TPath.GetFullPath", rewriter)
+        self.assertIn("DirectoryExists(Result)", rewriter)
+        self.assertIn("FILE_ATTRIBUTE_REPARSE_POINT", rewriter)
+        self.assertIn("unit_search_path_invalid", rewriter)
+        self.assertIn("if APath = '$(DCC_UnitSearchPath)' then", rewriter)
+        self.assertIn("Pos('$(', APath)", rewriter)
+        self.assertIn("(Pos('%', APath) > 0)", rewriter)
+        macro_check = rewriter[rewriter.index("if APath = '$(DCC_UnitSearchPath)' then"):
+                               rewriter.index("try", rewriter.index("if APath = '$(DCC_UnitSearchPath)' then"))]
+        self.assertIn("raise Exception.Create('unit_search_path_invalid')", macro_check)
+        self.assertIn("Result := Result + ';'", rewriter)
+        self.assertIn("function IsDelphiTargetsImport", rewriter)
+        self.assertIn("ExtractFileName(ProjectName)", rewriter)
+        self.assertIn("'CodeGear.Delphi.Targets'", rewriter)
+        self.assertIn("OutputGroup := Root.AddChild('PropertyGroup', ImportIndex)", rewriter)
+        self.assertIn("raise Exception.Create('wrapper_project_invalid')", rewriter)
+        self.assertNotIn("ImportStart := Pos(", rewriter)
+
     def test_wrapper_sanitizer_preserves_dccreference_compile_items(self):
         sanitizer = pascal_routine(
             COMPILER,
@@ -134,7 +259,7 @@ class WrapperIsolationContractTests(unittest.TestCase):
         self.assertNotIn("CompilerVersion = 36.0", compat)
         self.assertIn("DCG_MESSAGE_SERVICES_LAYOUT_13", compat)
         self.assertIn("{$MESSAGE FATAL", compat)
-        self.assertIn("dcg-v2-20260904-releaseprep-02", build_info)
+        self.assertIn("dcg-v2-20260905-searchpathfix-03", build_info)
         self.assertIn("DCG_IDE_VERSION", protocol)
 
     def test_package_outputs_are_isolated_by_active_bds_installation(self):

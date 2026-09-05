@@ -7,7 +7,15 @@ semantic versioning.
 
 ## [Unreleased]
 
-No changes yet.
+### Fixed
+
+- Resolved project-relative `DCC_UnitSearchPath` entries against the original
+  DPROJ directory and preserved the inherited macro tail in isolated wrappers.
+- Inserted generated wrapper output properties before the Delphi targets import
+  so OTA/MSBuild can materialize compiler search paths correctly.
+- Added read-only verification of `DCCStrs.sUnitSearchPath` and a validated
+  `IOTAProjectBuilder.BuildProject` fallback when the derived OTA
+  `UnitSearchPath` is empty.
 
 ## [2.0.0] - 2026-09-04
 

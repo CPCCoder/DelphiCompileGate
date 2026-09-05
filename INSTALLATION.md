@@ -101,7 +101,7 @@ Do not load a Win32 design-time BPL into the 64-bit IDE or a Win64 BPL into the
 Plugin: 2.0.0
 Protocol: 2
 Compiler: 37.0
-Build ID: dcg-v2-20260904-releaseprep-02
+Build ID: dcg-v2-20260905-searchpathfix-03
 ```
 
 If the build ID differs, Delphi is still loading another BPL. Remove the older
@@ -186,7 +186,7 @@ status: ok
 success: true
 protocol: 2
 plugin_version: 2.0.0
-package_build_id: dcg-v2-20260904-releaseprep-02
+package_build_id: dcg-v2-20260905-searchpathfix-03
 compiler_version: 37.0
 target_matched: true
 release_eligible: true

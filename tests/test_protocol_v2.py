@@ -58,7 +58,7 @@ class ProtocolV2Tests(unittest.TestCase):
             "wrapper": {"directory": str(self.wrapper_dir),
                         "project": evidence(self.wrapper_project), "main_source": evidence(self.wrapper_source)},
             "artifact": evidence(self.artifact),
-            "identity": {"protocol": 2, "plugin_version": "2.0.0", "package_build_id": "dcg-v2-20260904-releaseprep-02",
+            "identity": {"protocol": 2, "plugin_version": "2.0.0", "package_build_id": "dcg-v2-20260905-searchpathfix-03",
                          "loaded_package_path": str(self.package),
                          "loaded_package_sha256": hashlib.sha256(self.package.read_bytes()).hexdigest(),
                           "ide_path": None, "ide_version": "Delphi 13 Community Edition", "compiler_version": 37.0},

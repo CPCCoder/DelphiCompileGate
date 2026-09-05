@@ -188,6 +188,7 @@ implementation
 uses
   Winapi.Messages, Winapi.ActiveX, System.DateUtils, System.StrUtils,
   System.Hash, System.Variants, Xml.XMLDoc, Xml.XMLIntf,
+  DCCStrs,
   DelphiCompileGate.Consts,
   DelphiCompileGate.MessageHook;
 
@@ -1956,20 +1957,22 @@ end;
 function TDelphiCompileGateCompiler.MakeDprojReferencesAbsolute(const ADprojText,
   ASourceDir, AWrapperDir: string): string;
 var
-  PosStart: Integer;
-  PosEnd: Integer;
-  ValueStart: Integer;
-  ValueEnd: Integer;
-  Value: string;
-  AbsValue: string;
-  TagStart: Integer;
-  TagEnd: Integer;
+  Doc: IXMLDocument;
+  Root: IXMLNode;
+  OutputGroup: IXMLNode;
+  OutputNode: IXMLNode;
   PathList: string;
-  NewPathList: string;
   Part: string;
   P: Integer;
-  ProjectEnd: Integer;
+  I: Integer;
+  ImportIndex: Integer;
   HasExeOutput: Boolean;
+
+  function IsElementName(const ANode: IXMLNode; const AName: string): Boolean;
+  begin
+    Result := Assigned(ANode) and (ANode.NodeType = ntElement) and
+      (SameText(ANode.LocalName, AName) or SameText(ANode.NodeName, AName));
+  end;
 
   function ShouldAbsolutize(const AValue: string): Boolean;
   begin
@@ -1988,6 +1991,45 @@ var
   end;
 
   function RewritePathList(const AValue: string): string;
+    function CanonicalSearchDirectory(const APath: string): string;
+    var
+      CurrentPath: string;
+      ParentPath: string;
+      Attr: DWORD;
+    begin
+      if APath = '$(DCC_UnitSearchPath)' then
+        Exit(APath);
+      if (Pos('$(', APath) > 0) or (Pos('%', APath) > 0) then
+        raise Exception.Create('unit_search_path_invalid');
+      try
+        if TPath.IsPathRooted(APath) then
+          Result := ExpandFileName(APath)
+        else
+          Result := TPath.GetFullPath(TPath.Combine(ASourceDir, APath));
+        if not DirectoryExists(Result) then
+          raise Exception.Create('unit_search_path_invalid');
+        CurrentPath := ExcludeTrailingPathDelimiter(Result);
+        while CurrentPath <> '' do
+        begin
+          Attr := GetFileAttributes(PChar(CurrentPath));
+          if (Attr = INVALID_FILE_ATTRIBUTES) or
+             ((Attr and FILE_ATTRIBUTE_DIRECTORY) = 0) or
+             ((Attr and FILE_ATTRIBUTE_REPARSE_POINT) <> 0) then
+            raise Exception.Create('unit_search_path_invalid');
+          ParentPath := ExcludeTrailingPathDelimiter(ExtractFileDir(CurrentPath));
+          if SameText(ParentPath, CurrentPath) then
+            Break;
+          CurrentPath := ParentPath;
+        end;
+      except
+        on E: Exception do
+        begin
+          if E.Message = 'unit_search_path_invalid' then
+            raise;
+          raise Exception.Create('unit_search_path_invalid');
+        end;
+      end;
+    end;
   begin
     Result := '';
     PathList := AValue;
@@ -2010,78 +2052,94 @@ var
       begin
         if Result <> '' then
           Result := Result + ';';
-        Result := Result + AbsolutePath(Part);
+        Result := Result + CanonicalSearchDirectory(Part);
       end;
     end;
   end;
 
-  function RewriteExeOutputPath(const AValue: string): string;
+  function WrapperOutputPath: string;
   begin
     Result := ExcludeTrailingPathDelimiter(ExpandFileName(AWrapperDir));
   end;
-begin
-  Result := ADprojText;
-  HasExeOutput := Pos('<DCC_ExeOutput>', Result) > 0;
 
-  PosStart := Pos('Include="', Result);
-  while PosStart > 0 do
+  function IsDelphiTargetsImport(const ANode: IXMLNode): Boolean;
+  var
+    ProjectName: string;
   begin
-    ValueStart := PosStart + Length('Include="');
-    ValueEnd := PosEx('"', Result, ValueStart);
-    if ValueEnd = 0 then
-      Break;
+    Result := IsElementName(ANode, 'Import') and
+      ANode.HasAttribute('Project');
+    if not Result then
+      Exit;
+    ProjectName := VarToStr(ANode.Attributes['Project']);
+    ProjectName := StringReplace(ProjectName, '/', '\', [rfReplaceAll]);
+    Result := SameText(ExtractFileName(ProjectName),
+      'CodeGear.Delphi.Targets');
+  end;
 
-    Value := Copy(Result, ValueStart, ValueEnd - ValueStart);
-    if ShouldAbsolutize(Value) and SameText(ExtractFileExt(Value), '.pas') then
+  procedure ProcessNode(const ANode: IXMLNode);
+  var
+    ChildIndex: Integer;
+    IncludeValue: string;
+  begin
+    if not Assigned(ANode) then
+      Exit;
+    if ANode.NodeType = ntElement then
     begin
-      AbsValue := AbsolutePath(Value);
-      Delete(Result, ValueStart, ValueEnd - ValueStart);
-      Insert(AbsValue, Result, ValueStart);
-      ValueEnd := ValueStart + Length(AbsValue);
+      if ANode.HasAttribute('Include') then
+      begin
+        IncludeValue := VarToStr(ANode.Attributes['Include']);
+        if ShouldAbsolutize(IncludeValue) and
+           SameText(ExtractFileExt(IncludeValue), '.pas') then
+          ANode.Attributes['Include'] := AbsolutePath(IncludeValue);
+      end;
+      if IsElementName(ANode, 'DCC_UnitSearchPath') then
+        ANode.Text := RewritePathList(ANode.Text)
+      else if IsElementName(ANode, 'DCC_ExeOutput') then
+      begin
+        ANode.Text := WrapperOutputPath;
+        HasExeOutput := True;
+      end;
+    end;
+    for ChildIndex := 0 to ANode.ChildNodes.Count - 1 do
+      ProcessNode(ANode.ChildNodes[ChildIndex]);
+  end;
+
+begin
+  try
+    Doc := TXMLDocument.Create(nil);
+    Doc.LoadFromXML(ADprojText);
+    Root := Doc.DocumentElement;
+    if not IsElementName(Root, 'Project') then
+      raise Exception.Create('wrapper_project_invalid');
+
+    HasExeOutput := False;
+    ProcessNode(Root);
+
+    if not HasExeOutput then
+    begin
+      ImportIndex := -1;
+      for I := 0 to Root.ChildNodes.Count - 1 do
+        if IsDelphiTargetsImport(Root.ChildNodes[I]) then
+        begin
+          ImportIndex := I;
+          Break;
+        end;
+      if ImportIndex < 0 then
+        raise Exception.Create('wrapper_project_invalid');
+      OutputGroup := Root.AddChild('PropertyGroup', ImportIndex);
+      OutputNode := OutputGroup.AddChild('DCC_ExeOutput');
+      OutputNode.Text := WrapperOutputPath;
     end;
 
-    PosStart := PosEx('Include="', Result, ValueEnd + 1);
-  end;
-
-  TagStart := Pos('<DCC_UnitSearchPath>', Result);
-  while TagStart > 0 do
-  begin
-    ValueStart := TagStart + Length('<DCC_UnitSearchPath>');
-    TagEnd := PosEx('</DCC_UnitSearchPath>', Result, ValueStart);
-    if TagEnd = 0 then
-      Break;
-
-    PathList := Copy(Result, ValueStart, TagEnd - ValueStart);
-    NewPathList := RewritePathList(PathList);
-    Delete(Result, ValueStart, TagEnd - ValueStart);
-    Insert(NewPathList, Result, ValueStart);
-    TagStart := PosEx('<DCC_UnitSearchPath>', Result, ValueStart + Length(NewPathList));
-  end;
-
-  TagStart := Pos('<DCC_ExeOutput>', Result);
-  while TagStart > 0 do
-  begin
-    ValueStart := TagStart + Length('<DCC_ExeOutput>');
-    TagEnd := PosEx('</DCC_ExeOutput>', Result, ValueStart);
-    if TagEnd = 0 then
-      Break;
-
-    Value := Copy(Result, ValueStart, TagEnd - ValueStart);
-    AbsValue := RewriteExeOutputPath(Value);
-    Delete(Result, ValueStart, TagEnd - ValueStart);
-    Insert(AbsValue, Result, ValueStart);
-    TagStart := PosEx('<DCC_ExeOutput>', Result, ValueStart + Length(AbsValue));
-  end;
-
-  if not HasExeOutput then
-  begin
-    ProjectEnd := Pos('</Project>', Result);
-    if ProjectEnd > 0 then
-      Insert('  <PropertyGroup>'#13#10 +
-        '    <DCC_ExeOutput>' +
-        ExcludeTrailingPathDelimiter(ExpandFileName(AWrapperDir)) +
-        '</DCC_ExeOutput>'#13#10 +
-        '  </PropertyGroup>'#13#10, Result, ProjectEnd);
+    Result := Doc.XML.Text;
+  except
+    on E: Exception do
+    begin
+      if (E.Message = 'unit_search_path_invalid') or
+         (E.Message = 'wrapper_project_invalid') then
+        raise;
+      raise Exception.Create('wrapper_project_invalid');
+    end;
   end;
 end;
 
@@ -2944,6 +3002,7 @@ var
   CaptureOnlyStarted: Boolean;
   CaptureSourceFiles: TArray<string>;
   NotifierCleanupFailed: Boolean;
+  UseProjectBuilderForCompile: Boolean;
 
   procedure SetRuntimeError(const AMessage: string);
   begin
@@ -3027,6 +3086,131 @@ var
     AUnknownDialogDetected := DialogCloser.UnknownDialogDetected;
     ALegalNoticeEvidence := DialogCloser.LegalNoticeEvidence;
     FreeAndNil(DialogCloser);
+  end;
+  function TraceUnitSearchPathState: Boolean;
+  var
+    Options: IOTAProjectOptions;
+    Configurations: IOTAProjectOptionsConfigurations;
+    ActiveConfiguration: IOTABuildConfiguration;
+    LeafConfiguration: IOTABuildConfiguration;
+    OptionValue: Variant;
+    DccOptionValue: string;
+    EffectiveOptionValue: string;
+    DeclaresUnitSearchPath: Boolean;
+    SuppliedProject: Boolean;
+    DccOptionAvailable: Boolean;
+    EffectiveOptionAvailable: Boolean;
+
+    function WrapperDeclaresUnitSearchPath: Boolean;
+    var
+      Doc: IXMLDocument;
+      Root: IXMLNode;
+      procedure InspectNode(const ANode: IXMLNode);
+      var
+        I: Integer;
+      begin
+        if Result or not Assigned(ANode) then
+          Exit;
+        if (ANode.NodeType = ntElement) and
+           (SameText(ANode.LocalName, 'DCC_UnitSearchPath') or
+            SameText(ANode.NodeName, 'DCC_UnitSearchPath')) then
+        begin
+          Result := True;
+          Exit;
+        end;
+        for I := 0 to ANode.ChildNodes.Count - 1 do
+          InspectNode(ANode.ChildNodes[I]);
+      end;
+    begin
+      Result := False;
+      try
+        Doc := TXMLDocument.Create(nil);
+        Doc.LoadFromFile(ADprFile);
+        Root := Doc.DocumentElement;
+        if not Assigned(Root) then
+          raise Exception.Create('unit_search_path_unavailable');
+        InspectNode(Root);
+      except
+        on E: Exception do
+          raise Exception.Create('unit_search_path_unavailable');
+      end;
+    end;
+  begin
+    Result := False;
+    SuppliedProject := SameText(ExtractFileExt(ASourceName), '.dproj');
+    DeclaresUnitSearchPath := False;
+    if SuppliedProject then
+      DeclaresUnitSearchPath := WrapperDeclaresUnitSearchPath;
+    Options := Project.ProjectOptions;
+    DccOptionValue := '<unavailable>';
+    EffectiveOptionValue := '<unavailable>';
+    DccOptionAvailable := False;
+    EffectiveOptionAvailable := False;
+    if not Assigned(Options) then
+    begin
+      Trace('Unit search options project options unavailable');
+      if DeclaresUnitSearchPath then
+        raise Exception.Create('unit_search_path_unavailable');
+      Exit;
+    end;
+    try
+      OptionValue := Options.Values[DCCStrs.sUnitSearchPath];
+      DccOptionValue := VarToStr(OptionValue);
+      DccOptionAvailable := True;
+    except
+      on E: Exception do
+        DccOptionValue := '<error:' + E.ClassName + '>';
+    end;
+    try
+      OptionValue := Options.Values['UnitSearchPath'];
+      EffectiveOptionValue := VarToStr(OptionValue);
+      EffectiveOptionAvailable := True;
+    except
+      on E: Exception do
+        EffectiveOptionValue := '<error:' + E.ClassName + '>';
+    end;
+    Trace(Format('Unit search options project DCC_UnitSearchPath="%s" UnitSearchPath="%s"',
+      [DccOptionValue, EffectiveOptionValue]));
+
+    if DeclaresUnitSearchPath and
+       ((not DccOptionAvailable) or (Trim(DccOptionValue) = '') or
+        (not EffectiveOptionAvailable)) then
+      raise Exception.Create('unit_search_path_unavailable');
+    Result := DeclaresUnitSearchPath and DccOptionAvailable and
+      EffectiveOptionAvailable and (Trim(DccOptionValue) <> '') and
+      (Trim(EffectiveOptionValue) = '');
+
+    if not Supports(Options, IOTAProjectOptionsConfigurations,
+      Configurations) then
+    begin
+      Trace('Unit search options configuration interface unavailable');
+      Exit;
+    end;
+    Trace(Format('Unit search options active target=%s/%s',
+      [Configurations.ActivePlatformName,
+       Configurations.ActiveConfigurationName]));
+    ActiveConfiguration := Configurations.ActiveConfiguration;
+    if not Assigned(ActiveConfiguration) then
+    begin
+      Trace('Unit search options active configuration unavailable');
+      Exit;
+    end;
+    LeafConfiguration := ActiveConfiguration.PlatformConfiguration[APlatform];
+    if not Assigned(LeafConfiguration) then
+      LeafConfiguration := ActiveConfiguration;
+    try
+      Trace(Format('Unit search options leaf name="%s" key="%s" platform="%s" local="%s" inherited="%s" effective="%s" merged=%s',
+        [LeafConfiguration.Name, LeafConfiguration.Key,
+         LeafConfiguration.Platform,
+         LeafConfiguration.GetValue(DCCStrs.sUnitSearchPath, False),
+         LeafConfiguration.InheritedValue(DCCStrs.sUnitSearchPath),
+         LeafConfiguration.GetValue(DCCStrs.sUnitSearchPath, True),
+         BoolToStr(LeafConfiguration.Merged[DCCStrs.sUnitSearchPath], True)]));
+    except
+      on E: Exception do
+        Trace('Unit search options leaf inspection failed: ' + E.ClassName +
+          ': ' + E.Message);
+    end;
   end;
 begin
   Result.Success := False;
@@ -3138,6 +3322,7 @@ begin
        ((AConfiguration <> '') and
         not SameText(ASelectedConfiguration, AConfiguration)) then
       raise Exception.Create('target_selection_unavailable');
+    UseProjectBuilderForCompile := TraceUnitSearchPathState;
 
     ProjectBuilder := Project.ProjectBuilder;
     if not Assigned(ProjectBuilder) then
@@ -3156,8 +3341,20 @@ begin
     try
       if CompileNotifierIndex < 0 then
         raise Exception.Create('compile_notifier_unavailable');
-      CompileResult := CompileServices.CompileProjects([Project], cmOTABuild,
-        False, True);
+      if UseProjectBuilderForCompile then
+      begin
+        Trace('Compile entry=IOTAProjectBuilder.BuildProject because DCC_UnitSearchPath is materialized but UnitSearchPath is empty');
+        if ProjectBuilder.BuildProject(cmOTABuild, False, True) then
+          CompileResult := crOTASucceeded
+        else
+          CompileResult := crOTAFailed;
+      end
+      else
+      begin
+        Trace('Compile entry=IOTACompileServices.CompileProjects');
+        CompileResult := CompileServices.CompileProjects([Project], cmOTABuild,
+          False, True);
+      end;
       WaitOK := WaitForBackgroundCompile(CompileServices,
         FBackgroundCompileTimeoutMs);
       if not WaitOK then

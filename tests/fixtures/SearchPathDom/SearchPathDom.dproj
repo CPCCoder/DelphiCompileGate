@@ -1,0 +1,11 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <DCC_UnitSearchPath Condition="'$(Platform)'=='Win32'">lib&amp;shared;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <DCCReference Include="lib&amp;shared\AmpDependency.pas" />
+  </ItemGroup>
+  <!-- This property import must remain before the generated output group. -->
+  <Import Project="common.props" />
+  <Import Project="$(BDS)\Bin\CodeGear.Delphi.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Delphi.Targets')" />
+</Project>

@@ -1,6 +1,6 @@
 # DelphiCompileGate Known Issues
 
-Last updated: 2026-09-04
+Last updated: 2026-09-05
 
 This document records defects discovered while using DelphiCompileGate. The
 current and only supported contract is Delphi 13 Community Edition
@@ -700,6 +700,30 @@ Reason:
   command-line compiler workflow.
 - The product requirement is explicitly to compile inside the IDE through
   DelphiCompileGate.
+
+### DCG-017: Relative project unit search paths were ineffective in wrappers
+
+Status: Fixed
+
+Severity: High
+
+The wrapper XML correctly canonicalized relative `DCC_UnitSearchPath` entries,
+but projects without an original `DCC_ExeOutput` received the generated output
+PropertyGroup after the `CodeGear.Delphi.Targets` import. Delphi OTA exposed the
+official `DCCStrs.sUnitSearchPath` on the active configuration while the derived
+`UnitSearchPath` remained empty; compilation then failed on transitive units
+with F2613.
+
+The Gate now validates every search directory, preserves the inherited macro
+tail, inserts generated wrapper properties before the Delphi targets import,
+and uses the unique wrapper's `IOTAProjectBuilder.BuildProject` when the
+official value is materialized but the derived OTA value is empty. It never
+writes a guessed option key or adds transitive units to the consumer DPR.
+
+Acceptance covered `SearchPathFacade` and a large DebugServer project on
+Win32/Win64 and Debug/Release. All eight builds returned `status: ok`,
+`target_matched: true`, and `release_eligible: true`; the original DebugServer
+DPR and DPROJ SHA-256 values remained unchanged.
 
 ## Verified 64-bit IDE Host
 
