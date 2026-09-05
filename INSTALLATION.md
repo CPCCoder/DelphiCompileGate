@@ -67,8 +67,11 @@ defines, packages, search paths, imports, or build events are required.
 1. Start Delphi 13 Community Edition.
 2. Open `Package\DelphiCompileGate.dproj` or
    `Package\DelphiCompileGate.dpk`.
-3. Select the **Win32** platform. A Delphi design-time package is loaded by the
-   Win32 IDE even when compiled projects later target Win64.
+3. Select the package platform that matches the IDE host:
+   - **Win32** for the 32-bit `bin\bds.exe` IDE.
+   - **Win64** for the 64-bit `bin64\bds.exe` IDE.
+   Project targets remain independent; either IDE host can compile Win32 and
+   Win64 projects.
 4. Select **Release** for a distributable local package, or **Debug** while
    developing the plugin.
 5. Select **Project > Build DelphiCompileGate** or press `Ctrl+F9`.
@@ -77,10 +80,12 @@ defines, packages, search paths, imports, or build events are required.
 Package outputs are written below:
 
 ```text
-%BDSCOMMONDIR%\DelphiCompileGate\Win32\<Config>
+%BDSCOMMONDIR%\DelphiCompileGate\<Win32-or-Win64>\<Config>
 ```
 
 Do not copy a BPL, DCP, or DCU from another Delphi installation.
+Do not load a Win32 design-time BPL into the 64-bit IDE or a Win64 BPL into the
+32-bit IDE.
 
 ## Install the Delphi Package
 

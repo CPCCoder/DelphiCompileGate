@@ -350,9 +350,12 @@ restored during job cleanup.
 ## Delphi 13 Compatibility
 
 The package supports only Delphi 13 Community Edition
-(`CompilerVersion = 37.0`). Every other compiler version fails at package build
-time. The diagnostic-capture VMT layout is verified only against the Delphi 13
-`ToolsAPI.pas`. Do not mix DCUs, DCPs, or BPLs from other IDE versions.
+(`CompilerVersion = 37.0`). Both the 32-bit and 64-bit Delphi 13 IDE hosts are
+supported and live-tested. Build the design-time BPL for the matching IDE host
+architecture; either host can compile Win32 and Win64 project targets. Every
+other compiler version fails at package build time. The diagnostic-capture VMT
+layout is verified only against the Delphi 13 `ToolsAPI.pas`. Do not mix DCUs,
+DCPs, or BPLs from other IDE versions or host architectures.
 
 ## Queue Behavior
 

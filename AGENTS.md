@@ -41,7 +41,8 @@ Do not call any other compile function.
 
 Before submitting a job:
 
-1. Delphi 13 Community Edition must be running.
+1. Delphi 13 Community Edition must be running. Either the 32-bit or 64-bit IDE
+   host is supported when the installed package matches the host architecture.
 2. The current DelphiCompileGate package must be installed.
 3. Open **Help > Help Wizards > Delphi Compile Gate Settings / Status...**.
    In a German IDE, use

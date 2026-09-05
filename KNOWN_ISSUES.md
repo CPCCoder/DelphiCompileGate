@@ -701,9 +701,21 @@ Reason:
 - The product requirement is explicitly to compile inside the IDE through
   DelphiCompileGate.
 
+## Verified 64-bit IDE Host
+
+- The 64-bit Delphi 13 `bin64\bds.exe` host successfully compiled Win32 and
+  Win64 targets.
+- The 64-bit message-service VMT hook captured exact Win64 `E2003` diagnostics.
+- The real German Community Edition notice was acknowledged through sole exact
+  OK with `accepted_terms:false` evidence.
+- All tested hidden modules closed and verified absent without a `bds.exe` or
+  `DelphiLSP.exe` application-error event.
+- The installed design-time BPL architecture must match the IDE host; compiled
+  project targets remain independent.
+
 ## Validation Checklist for Future Fixes
 
-- Build the Win32 design-time BPL through Delphi 13 CE only.
+- Build the Win32 or Win64 design-time BPL to match the Delphi 13 IDE host.
 - Never reuse DCUs, DCPs or BPLs from another IDE version.
 - Confirm the installed BPL hash and source commit in v2 evidence.
 - Confirm the IDE-specific package identity and compiler version match the

@@ -101,6 +101,15 @@ class ExamplesContractTests(unittest.TestCase):
         self.assertIn(repository + ".git", installation)
         self.assertIn(repository, metadata)
 
+    def test_installation_documents_32_and_64_bit_ide_hosts(self):
+        installation = (ROOT / "INSTALLATION.md").read_text(encoding="utf-8")
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        self.assertIn("Win32** for the 32-bit", installation)
+        self.assertIn("Win64** for the 64-bit", installation)
+        self.assertIn("bin64\\bds.exe", installation)
+        self.assertIn("either IDE host can compile Win32 and\n   Win64 projects", installation)
+        self.assertIn("Both the 32-bit and 64-bit Delphi 13 IDE hosts", readme)
+
     def test_agent_instructions_make_dproj_decision_deterministic(self):
         instructions = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         decision = instructions[
