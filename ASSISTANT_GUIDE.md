@@ -25,7 +25,7 @@ call any other client method as a compile entry point.
 - Delphi 13 Community Edition is running.
 - `Package\DelphiCompileGate.dpk` has been built and installed in Delphi 13.
 - `Delphi Compile Gate Settings / Status...` reports Protocol `2`, plugin
-  version `2.0.0`, and build ID `dcg-v2-20260905-searchpathfix-03`.
+  version `2.0.1`, and build ID `dcg-v2-20260905-searchpathfix-04`.
 - The user selected **Start Watch** and then **OK** in Settings/Status. The
   watcher starts only after those actions; it does not start with the IDE.
 

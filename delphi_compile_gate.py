@@ -44,10 +44,10 @@ class DelphiCompileGateClient:
     # Result shape is exact. Only packages that emit the current legal_notice
     # evidence object are accepted.
     V2_ALLOWED_PACKAGE_BUILD_IDS = frozenset({
-        "dcg-v2-20260905-searchpathfix-03",
+        "dcg-v2-20260905-searchpathfix-04",
     })
     V2_PACKAGE_IDE_IDENTITIES = {
-        "dcg-v2-20260905-searchpathfix-03": ("Delphi 13 Community Edition", 37.0),
+        "dcg-v2-20260905-searchpathfix-04": ("Delphi 13 Community Edition", 37.0),
     }
 
     def __init__(self, timeout: int = 60, base_dir: str = ""):
@@ -320,7 +320,7 @@ class DelphiCompileGateClient:
             raise ValueError("input evidence echo mismatch")
         package_build_id = result["identity"]["package_build_id"]
         if (result["identity"]["protocol"] != 2
-                or result["identity"]["plugin_version"] != "2.0.0"
+                or result["identity"]["plugin_version"] != "2.0.1"
                 or package_build_id not in cls.V2_ALLOWED_PACKAGE_BUILD_IDS):
             raise ValueError("plugin identity mismatch")
         expected_ide_identity = cls.V2_PACKAGE_IDE_IDENTITIES.get(package_build_id)

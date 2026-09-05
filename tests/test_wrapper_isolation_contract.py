@@ -259,7 +259,7 @@ class WrapperIsolationContractTests(unittest.TestCase):
         self.assertNotIn("CompilerVersion = 36.0", compat)
         self.assertIn("DCG_MESSAGE_SERVICES_LAYOUT_13", compat)
         self.assertIn("{$MESSAGE FATAL", compat)
-        self.assertIn("dcg-v2-20260905-searchpathfix-03", build_info)
+        self.assertIn("dcg-v2-20260905-searchpathfix-04", build_info)
         self.assertIn("DCG_IDE_VERSION", protocol)
 
     def test_package_outputs_are_isolated_by_active_bds_installation(self):

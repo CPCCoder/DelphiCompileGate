@@ -13,7 +13,7 @@ body:
     attributes:
       label: DelphiCompileGate version
       description: Include the plugin version and package build ID when available.
-      placeholder: "2.0.0 / dcg-v2-..."
+      placeholder: "2.0.1 / dcg-v2-..."
     validations:
       required: true
 

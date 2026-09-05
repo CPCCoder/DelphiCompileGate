@@ -98,10 +98,10 @@ Do not load a Win32 design-time BPL into the 64-bit IDE or a Win64 BPL into the
 5. Confirm the displayed identity:
 
 ```text
-Plugin: 2.0.0
+Plugin: 2.0.1
 Protocol: 2
 Compiler: 37.0
-Build ID: dcg-v2-20260905-searchpathfix-03
+Build ID: dcg-v2-20260905-searchpathfix-04
 ```
 
 If the build ID differs, Delphi is still loading another BPL. Remove the older
@@ -185,8 +185,8 @@ A successful result must contain:
 status: ok
 success: true
 protocol: 2
-plugin_version: 2.0.0
-package_build_id: dcg-v2-20260905-searchpathfix-03
+plugin_version: 2.0.1
+package_build_id: dcg-v2-20260905-searchpathfix-04
 compiler_version: 37.0
 target_matched: true
 release_eligible: true

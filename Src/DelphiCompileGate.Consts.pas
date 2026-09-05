@@ -4,7 +4,7 @@ interface
 
 const
   PLUGIN_NAME = 'DelphiCompileGate';
-  PLUGIN_VERSION = '2.0.0';
+  PLUGIN_VERSION = '2.0.1';
   PLUGIN_MENU_CAPTION = 'Delphi Compile Gate';
   SETTINGS_SCHEMA_VERSION = 1;
   DEFAULT_WATCH_INTERVAL_MS = 1000;

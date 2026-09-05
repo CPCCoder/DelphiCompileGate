@@ -62,8 +62,8 @@ troubleshooting instructions, see [`INSTALLATION.md`](INSTALLATION.md).
 
 After changing any Pascal source, rebuild and reinstall the package in the IDE.
 Changing the checkout does not update the loaded BPL. The loaded instance must
-report plugin version `2.0.0`, Protocol `2`, and build ID
-`dcg-v2-20260905-searchpathfix-03`.
+report plugin version `2.0.1`, Protocol `2`, and build ID
+`dcg-v2-20260905-searchpathfix-04`.
 
 ## Prompt for AI Coding Assistants
 
@@ -425,8 +425,8 @@ project-specific defines, packages, imports, search paths, or build steps.
 - Examples use neutral paths and environment variables; no machine-specific or
   downstream-project paths are required.
 - A release must pass the Python contract tests and a Delphi 13 package build.
-- Published artifacts must identify plugin version `2.0.0`, Protocol `2`, and
-  build ID `dcg-v2-20260905-searchpathfix-03`.
+- Published artifacts must identify plugin version `2.0.1`, Protocol `2`, and
+  build ID `dcg-v2-20260905-searchpathfix-04`.
 - Security and dialog-policy limitations in `KNOWN_ISSUES.md` must be reviewed
   before publishing.
 - The project is distributed under the MIT License.

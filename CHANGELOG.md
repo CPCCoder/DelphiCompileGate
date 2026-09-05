@@ -7,6 +7,10 @@ semantic versioning.
 
 ## [Unreleased]
 
+No changes yet.
+
+## [2.0.1] - 2026-09-05
+
 ### Fixed
 
 - Resolved project-relative `DCC_UnitSearchPath` entries against the original
