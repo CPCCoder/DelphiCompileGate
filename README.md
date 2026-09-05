@@ -117,6 +117,24 @@ Run\
 `-- Projects\    generated wrapper projects and artifacts
 ```
 
+### Wrapper Retention
+
+Generated job directories below `Projects` are retained for two days by
+default. When a new wrapper is created, the Gate deletes up to four stale
+wrapper directories recursively, including their DPR/DPK, DPROJ, EXE/BPL, DCU,
+and related compiler artifacts. Limiting cleanup to four directories per build
+prevents a large backlog from blocking the IDE thread.
+
+Set the retention period before starting Delphi:
+
+```powershell
+$env:DELPHI_COMPILE_GATE_TEMP_MAX_AGE_DAYS = "7"
+```
+
+The minimum is one day. Cleanup runs only when a new wrapper is created, so old
+directories remain until the next compile if the Gate is idle. `Processed`,
+`Failed`, and `Logs` do not currently have automatic age-based cleanup.
+
 The watcher accepts only files with the exact `.job.json` suffix. It moves
 manifests with invalid schemas, mismatched identities, or unverifiable evidence
 to `Failed`. Do not create or rename queue manifests manually;

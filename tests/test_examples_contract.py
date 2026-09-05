@@ -110,6 +110,19 @@ class ExamplesContractTests(unittest.TestCase):
         self.assertIn("either IDE host can compile Win32 and\n   Win64 projects", installation)
         self.assertIn("Both the 32-bit and 64-bit Delphi 13 IDE hosts", readme)
 
+    def test_public_docs_explain_generated_wrapper_retention(self):
+        for name in ("README.md", "INSTALLATION.md"):
+            documentation = (ROOT / name).read_text(encoding="utf-8")
+            folded = " ".join(documentation.split())
+            self.assertIn("DELPHI_COMPILE_GATE_TEMP_MAX_AGE_DAYS", documentation,
+                          name)
+            self.assertRegex(documentation, r"two days", name)
+            self.assertRegex(documentation, r"at most four|up to four", name)
+            self.assertIn("Cleanup runs only when a new wrapper is created",
+                          folded, name)
+            for directory in ("Processed", "Failed", "Logs"):
+                self.assertIn(directory, documentation, name)
+
     def test_agent_instructions_make_dproj_decision_deterministic(self):
         instructions = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
         decision = instructions[

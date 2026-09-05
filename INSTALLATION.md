@@ -154,6 +154,23 @@ $env:DELPHI_COMPILE_GATE_BASE_DIR = "D:\DelphiCompileGateRuntime"
 The plugin and client must resolve the same runtime directory. Do not place the
 runtime queue in a network share or a broadly writable directory.
 
+### Generated Wrapper Retention
+
+The Gate retains generated directories below `Run\Projects` for two days by
+default. Each new compile removes at most four stale wrapper directories,
+including generated source, project, executable, package, DCU, and related
+artifacts. A larger backlog is removed gradually over subsequent builds.
+
+To change the retention period, set this variable before starting Delphi:
+
+```powershell
+$env:DELPHI_COMPILE_GATE_TEMP_MAX_AGE_DAYS = "7"
+```
+
+Values below one day are raised to one day. Cleanup runs only when a new wrapper
+is created. The `Processed`, `Failed`, and `Logs` directories are not removed by
+this age-based wrapper cleanup.
+
 ## Verify the Installation
 
 From the repository root with the watcher running:
